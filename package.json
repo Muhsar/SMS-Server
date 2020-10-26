@@ -7,9 +7,7 @@
     "server": "nodemon server.js",
     "client": "npm run react-start --prefix client",
     "desktop": "npm start --prefix client",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "heroku-postbuild": "cd client && npm install && npm run react-build",
-    "dev2": "concurrently \"npm run server\" \"npm run desktop\""
+    "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "author": "Musa",
   "license": "MIT",
