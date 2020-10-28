@@ -9,10 +9,54 @@ const Student = require('../models/Students')
 const Result = require('../models/Result')
 const Teacher = require('../models/Teacher')
 const StudentBill = require('../models/StudentBill')
+const Progress = require('../models/Progress')
 router.get('/',(req,res)=>{
   var decode = jwt.verify(req.headers['authorization'], key)
   Teacher.findOne({teacher_id:decode.teacher_id,school_id:decode.school_id})
   .then(teacher=>res.json({teacher}))
+})
+router.get('/attendance/:id',(req,res)=>{
+  const decode = jwt.verify(req.headers['authorization'],key)
+  Progress.findOne({school_id:decode.school_id,student_id:req.params.id,clas:decode.clas})
+  .then(attendance=>{
+    res.json(attendance)
+  })
+})
+router.post('/attendance',(req,res)=>{
+  const decode = jwt.verify(req.headers['authorization'],key)
+  const school_id = decode.school_id
+  const {
+    fullName,
+    clas,
+    image,
+    attendance,
+    student_id,
+    officeHeld
+  } = req.body
+
+  Progress.findOne({fullName,clas,student_id,school_id})
+  .then(progress=>{
+      const update = {
+        attendance:[...progress.attendance,attendance],
+        officeHeld
+      }
+      Progress.findOneAndUpdate({fullName,clas,student_id,school_id}, {
+        $set: update
+    }, {
+        new: true,
+        runValidators: true,
+        upsert: true,
+        returnOriginal: false,
+        returnNewDocument: true
+    }).exec()
+    .then(()=>{
+      Progress.findOne({fullName,clas,image,student_id,school_id})
+      .then(progress=>{
+        res.json({progress,msg:'Attendance Updated'})
+      })
+    })
+      
+  })
 })
 router.post('/password',(req,res)=>{
   var {oldPassword,newPassword} = req.body

@@ -14,7 +14,7 @@ const Bill = require('../models/Bill')
 const StudentBill = require('../models/StudentBill')
 const Chat = require('../models/Chat')
 const Receipt = require('../models/Receipt')
-
+const Progress = require('../models/Progress')
 router.get('/',(req,res)=>{
     const decode = jwt.verify(req.headers['authorization'],key)
     User.findOne({school_id:decode.school_id})
@@ -188,6 +188,16 @@ router.post('/student',async(req,res)=>{
   var stud = Number(student.length)
   var sid = stud + 1
   var student_id = req.body.school_id+'_STD_0'+sid
+  var progressData = new Progress({
+fullName:req.body.surname+' '+req.body.name,
+clas:req.body.clas,
+image:req.body.image,
+schoolName:decode.schoolName,
+attendance:[],
+student_id,
+school_id:decode.school_id,
+officeHeld:'No Office Held'
+  })
   var newStudent = new Student({
     status:'registered',
     name:req.body.name,
@@ -251,6 +261,7 @@ var month = months[d.getMonth()]
         Receipt.create(newReceipt)
         StudentBill.create(newStudentBill)
         Student.create(newStudent)
+        Progress.create(progressData)
           .then(student=>{
             res.json({student,msg:student.surname+' '+student.name+"'s registration was successful"
           })
