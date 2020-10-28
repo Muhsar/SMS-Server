@@ -49,6 +49,9 @@ const UserSchema = new mongoose.Schema({
     },
     type:{
         type: String
+    },
+    color:{
+        type:String
     }
 })
 const User = mongoose.model('User', UserSchema);

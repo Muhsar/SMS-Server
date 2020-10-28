@@ -53,6 +53,9 @@ const TeacherSchema = new mongoose.Schema({
   },
   password: {
     type: String
+  },
+  color:{
+      type:String
   }
 });
 

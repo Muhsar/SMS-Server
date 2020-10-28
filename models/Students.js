@@ -89,6 +89,9 @@ image:{
   },
   feeStatus:{
     type: String
+  },
+  color:{
+      type:String
   }
 });
 

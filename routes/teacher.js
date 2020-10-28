@@ -9,7 +9,112 @@ const Student = require('../models/Students')
 const Result = require('../models/Result')
 const Teacher = require('../models/Teacher')
 const StudentBill = require('../models/StudentBill')
+router.get('/',(req,res)=>{
+  var decode = jwt.verify(req.headers['authorization'], key)
+  Teacher.findOne({teacher_id:decode.teacher_id,school_id:decode.school_id})
+  .then(teacher=>res.json({teacher}))
+})
+router.post('/password',(req,res)=>{
+  var {oldPassword,newPassword} = req.body
+  const decode = jwt.verify(req.headers['authorization'],key)
+  Teacher.findOne({teacher_id:decode.teacher_id})
+  .then(teacher=>{
+    if(teacher){
+      bcrypt.hash(newPassword,10,(err,hash)=>{
+        newPassword=hash
+        if(bcrypt.compareSync(oldPassword, teacher.password)){
+          Teacher.findOneAndUpdate({teacher_id:decode.teacher_id }, {
+            $set: {password:newPassword}
+        }, {
+            new: true,
+            runValidators: true,
+            upsert: true,
+            returnOriginal: false,
+            returnNewDocument: true
+        }).exec()
+        .then(()=>{
+          res.json({msg:'Password Change Successful'})
+        })
+        }
+        else{
+          res.json({error:'Old Password Not Correct'})
+        }
+      }
+      )}
 
+  })
+})
+router.post('/image',(req,res)=>{
+  var {image} = req.body
+  const decode = jwt.verify(req.headers['authorization'],key)
+  Teacher.findOne({teacher_id:decode.teacher_id})
+  .then(teacher=>{
+    Teacher.findOneAndUpdate({teacher_id:decode.teacher_id},{
+      $set:{image:image}
+    },{
+      new:true,
+      runValidators:true,
+      upsert:true,
+      returnOriginal:false,
+      returnNewDocument:true
+    }
+    ).exec()
+    .then(()=>{
+      const payload = {
+        _id : teacher._id,
+        name: teacher.name,
+        email: teacher.email,
+        teacher_id:teacher.teacher_id,
+        surname:teacher.surname,
+        clas:teacher.clas,
+        gender:teacher.gender,
+        address:teacher.address,
+        number:teacher.number,
+        school_id:teacher.school_id,
+        type:teacher.type,
+        image:image
+      }
+      let token = jwt.sign(payload, key)
+      res.json({token,msg:'Image Upload Successful'})
+    })
+  })
+})
+router.post('/color',(req,res)=>{
+  var {color} = req.body
+  const decode = jwt.verify(req.headers['authorization'],key)
+  Teacher.findOne({teacher_id:decode.teacher_id})
+  .then(teacher=>{
+    Teacher.findOneAndUpdate({teacher_id:decode.teacher_id},{
+      $set:{color:color}
+    },{
+      new:true,
+      runValidators:true,
+      upsert:true,
+      returnOriginal:false,
+      returnNewDocument:true
+    }
+    ).exec()
+    .then(()=>{
+      const payload = {
+        _id : teacher._id,
+        name: teacher.name,
+        email: teacher.email,
+        teacher_id:teacher.teacher_id,
+        surname:teacher.surname,
+        clas:teacher.clas,
+        gender:teacher.gender,
+        address:teacher.address,
+        number:teacher.number,
+        school_id:teacher.school_id,
+        type:teacher.type,
+        image:teacher.image,
+        color:color
+      }
+      let token = jwt.sign(payload, key)
+      res.json({token,msg:'Image Upload Successful'})
+    })
+  })
+})
 router.get('/students',  (req, res) =>{
     var decode = jwt.verify(req.headers['authorization'], key)
     Student.find({school_id:decode.school_id,status:'registered',clas:decode.clas})
@@ -19,7 +124,7 @@ router.get('/students',  (req, res) =>{
 
   router.get('/studentbill',(req,res)=>{
     var decode = jwt.verify(req.headers['authorization'], key)
-    StudentBill.find({school_id:decode.school_id,feeStatus:'debtor',clas:decode.clas})
+    StudentBill.find({school_id:decode.school_id,clas:decode.clas,reg:true})
     .then(studentBill => res.json(studentBill))
     .catch(err => res.status(400).json('Error: ' + err))
   })
@@ -66,7 +171,7 @@ router.get('/students',  (req, res) =>{
       school_id:decode.school_id,
       total:req.body.total
     })
-    Result.findOne({clas: decode.clas,term:req.body.term,school_id:decode.school_id,subject:req.body.subject})
+    Result.findOne({clas: decode.clas,term:req.body.term,school_id:decode.school_id,subject:req.body.subject,student_id:req.body.student_id})
     .then(async(result)=>{
       if(result){
         res.json({error:result.subject+"'s result for "+result.term+" exist try updating or deleting the result instead"})
@@ -85,19 +190,19 @@ router.get('/students',  (req, res) =>{
   })
   router.get('/1sttermresult/:student_id', (req,res)=>{
     var decode = jwt.verify(req.headers['authorization'],key)
-    Result.find({student_id:req.params.student_id,term:'1stTerm',clas:decode.clas,school_id:decode.school_id})
+    Result.find({student_id:req.params.student_id,term:'1stTerm',school_id:decode.school_id})
     .then(result => res.json(result))
     .catch(err => res.status(400).json('Error: ' + err))
   })
   router.get('/2ndtermresult/:student_id', (req,res)=>{
     var decode = jwt.verify(req.headers['authorization'],key)
-    Result.find({student_id:req.params.student_id,term:'2ndTerm',clas:decode.clas,school_id:decode.school_id})
+    Result.find({student_id:req.params.student_id,term:'2ndTerm',school_id:decode.school_id})
     .then(result => res.json(result))
     .catch(err => res.status(400).json('Error: ' + err))
   })
   router.get('/3rdtermresult/:student_id', (req,res)=>{
     var decode = jwt.verify(req.headers['authorization'],key)
-    Result.find({student_id:req.params.student_id,term:'3rdTerm',clas:decode.clas,school_id:decode.school_id})
+    Result.find({student_id:req.params.student_id,term:'3rdTerm',school_id:decode.school_id})
     .then(result => res.json(result))
     .catch(err => res.status(400).json('Error: ' + err))
   })
@@ -156,7 +261,9 @@ router.get('/students',  (req, res) =>{
             address:teacher.address,
             number:teacher.number,
             school_id:teacher.school_id,
-            type:teacher.type
+            type:teacher.type,
+            image:teacher.image,
+            color:teacher.color
           }
           let token = jwt.sign(payload, key)
           res.send(token)
@@ -179,7 +286,9 @@ router.get('/students',  (req, res) =>{
                 address:teacher.address,
                 number:teacher.number,
                 school_id:teacher.school_id,
-                type:teacher.type
+                type:teacher.type,
+                image:teacher.image,
+                color:teacher.color
               }
               let token = jwt.sign(payload, key)
               res.send(token)

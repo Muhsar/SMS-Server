@@ -22,6 +22,12 @@ router.get('/',(req,res)=>{
         res.json(user)
       })
   })
+  router.get('/school/:id',(req,res)=>{
+    User.findOne({school_id:req.params.id})
+      .then(user=>{
+        res.json(user)
+      })
+  })
 router.post('/account',(req,res)=>{
   const decode = jwt.verify(req.headers['authorization'],key)
   const {
@@ -36,7 +42,8 @@ router.post('/account',(req,res)=>{
         firstName,
         lastName,
         ownerEmail,
-        number
+        number,
+        color
 } = req.body
 const update = {
   clas,
@@ -50,7 +57,8 @@ const update = {
         firstName,
         lastName,
         ownerEmail,
-        number
+        number,
+        color
 }
   User.findOneAndUpdate({school_id:decode.school_id }, {
     $set: update
@@ -80,7 +88,8 @@ const update = {
         number,
           school_id,
           type,
-          _id
+          _id,
+          color
         } = user
         const payload = {
           password,
@@ -98,7 +107,8 @@ const update = {
           number,
             school_id,
             type,
-            _id
+            _id,
+            color
           }
           let token = jwt.sign(payload, key)
       res.json({user,msg:'Update Successful',token})
@@ -201,7 +211,9 @@ router.post('/student',async(req,res)=>{
     age:age,
     type:'student',
     signup:false,
-    image:req.body.image
+    image:req.body.image,
+    color:decode.color
+
   })
   var d = new Date();
   var day = d.getDate()
@@ -266,7 +278,8 @@ router.post('/teacher',async(req,res)=>{
     number:req.body.number,
     type:'teacher',
     signup: false,
-    image: req.body.image
+    image: req.body.image,
+    color:decode.color
   })
   Teacher.find({school_id:decode.school_id})
   .then(teachers=>{
@@ -411,7 +424,8 @@ router.post('/updatestudent/:student_id',(req,res)=>{
         email,
         number,
         paddress,
-        image
+        image,
+        color:decode.color
     }
     Student.findOne({student_id:req.params.student_id})
       .then(student=>{
@@ -449,7 +463,9 @@ router.post('/updateteacher/:teacher_id',(req,res)=>{
     var email=req.body.email
     var number=req.body.number
     var image=req.body.image
-    var update = {name,surname,clas,gender,address,email,number,image}
+    var update = {name,surname,clas,gender,address,email,number,image,
+      color:decode.color
+    }
     Teacher.findOne({clas:req.body.clas,school_id:decode.school_id,status:'registered'})
       .then(teacher=>{
         if(teacher){
@@ -535,7 +551,8 @@ router.post('/student/:student_id',(req, res) => {
       firstName,
       lastName,
       ownerEmail,
-      number
+      number,
+      color
     } = req.body
     var skul = await User.find()
     var school = Number(skul.length) + 1
@@ -556,7 +573,8 @@ router.post('/student/:student_id',(req, res) => {
       number,
         school_id:school_id,
         created:today,
-        type:'owner'
+        type:'owner',
+        color
     }
     User.findOne({
         schoolEmail
@@ -603,7 +621,8 @@ router.post('/student/:student_id',(req, res) => {
                     number,
                       school_id,
                       type,
-                      _id
+                      _id,
+                      color
                   } = user
                   const payload = {
                     password,
@@ -621,7 +640,8 @@ router.post('/student/:student_id',(req, res) => {
                     number,
                       school_id,
                       type,
-                      _id
+                      _id,
+                      color
                     }
                     let token = jwt.sign(payload, key)
                     res.send(token)
@@ -749,13 +769,14 @@ router.delete('/bill/:id',(req,res)=>{
         }
     })
     router.get('/classbill/:clas',async(req,res)=>{
-      await Bill.findOne({clas:req.params.clas})
+      const decode = jwt.verify(req.headers['authorization'] , key)
+      await Bill.findOne({clas:req.params.clas,school_id:decode.school_id})
       .then(bill=>res.json(bill))
       .catch(err => res.status(400).json('Error: ' + err))
     })
     router.get('/studentbill',(req,res)=>{
       var decode = jwt.verify(req.headers['authorization'], key)
-      StudentBill.find({school_id:decode.school_id,feeStatus:'debtor'})
+      StudentBill.find({school_id:decode.school_id,feeStatus:'debtor',reg:true})
       .then(studentBill => res.json(studentBill))
       .catch(err => res.status(400).json('Error: ' + err))
     })

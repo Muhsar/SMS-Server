@@ -7,7 +7,8 @@
     "server": "nodemon server.js",
     "client": "npm run react-start --prefix client",
     "desktop": "npm start --prefix client",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev2": "concurrently \"npm run server\" \"npm run desktop\""
   },
   "author": "Musa",
   "license": "MIT",
