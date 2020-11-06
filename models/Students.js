@@ -41,7 +41,7 @@ image:{
   religion: {
     type: String
   },
-  sog: {
+  state: {
     type: String
   },
   lga: {

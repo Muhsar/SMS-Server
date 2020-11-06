@@ -17,7 +17,7 @@ router.get('/',(req,res)=>{
 })
 router.get('/attendance/:id',(req,res)=>{
   const decode = jwt.verify(req.headers['authorization'],key)
-  Progress.findOne({school_id:decode.school_id,student_id:req.params.id,clas:decode.clas})
+  Progress.findOne({school_id:decode.school_id,student_id:req.params.id})
   .then(attendance=>{
     res.json(attendance)
   })

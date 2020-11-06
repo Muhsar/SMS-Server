@@ -14,7 +14,7 @@ const Bill = require('../models/Bill')
 const StudentBill = require('../models/StudentBill')
 const Chat = require('../models/Chat')
 const Receipt = require('../models/Receipt')
-const Progress = require('../models/Progress')
+const Progress = (require('../models/Progress'))
 router.get('/',(req,res)=>{
     const decode = jwt.verify(req.headers['authorization'],key)
     User.findOne({school_id:decode.school_id})
@@ -207,7 +207,7 @@ officeHeld:'No Office Held'
     gender:req.body.gender,
     religion:req.body.religion,
     date:req.body.date,
-    sog:req.body.sog,
+    state:req.body.state,
     lga:req.body.lga,
     student_id,
     feeStatus:req.body.feeStatus,
@@ -260,8 +260,8 @@ var month = months[d.getMonth()]
       if(!student){
         Receipt.create(newReceipt)
         StudentBill.create(newStudentBill)
-        Student.create(newStudent)
         Progress.create(progressData)
+        Student.create(newStudent)
           .then(student=>{
             res.json({student,msg:student.surname+' '+student.name+"'s registration was successful"
           })
@@ -413,7 +413,7 @@ router.post('/updatestudent/:student_id',(req,res)=>{
     var surname=req.body.surname
     var clas=req.body.clas
     var department=req.body.department
-    var sog=req.body.sog
+    var state=req.body.state
     var lga=req.body.lga
     var address=req.body.address
     var pname=req.body.pname
@@ -422,12 +422,13 @@ router.post('/updatestudent/:student_id',(req,res)=>{
     var number=req.body.number
     var paddress=req.body.paddress
     var image = req.body.image
+    
     var update={
         name,
         surname,
         clas,
         department,
-        sog,
+        state,
         lga,
         address,
         pname,
@@ -440,25 +441,87 @@ router.post('/updatestudent/:student_id',(req,res)=>{
     }
     Student.findOne({student_id:req.params.student_id})
       .then(student=>{
-        Student.findOneAndUpdate({
-            student_id: req.params.student_id
-        }, {
-            $set: update
-        }, {
-            new: true,
-            runValidators: true,
-            upsert: true,
-            returnOriginal: false,
-            returnNewDocument: true
-        }).exec()
-
-        .then(()=>{
-          Student.find({school_id:decode.school_id, status:'registered'})
-            .then(responses=>{
-              res.json({msg:student.name+' update was successfull',responses})
-              console.log(responses)
+        var progressUpdate={
+          fullName:surname+' '+name,
+    clas:student.clas===clas ? student.clas : clas,
+    image:image,
+    schoolName:decode.schoolName,
+    student_id:req.params.student_id,
+    school_id:decode.school_id
+        }
+        Progress.findOne({student_id:req.params.student_id})
+          .then(test=>{
+            if(test){
+              Progress.findOneAndUpdate({
+                student_id: req.params.student_id
+            }, {
+                $set: progressUpdate
+            }, {
+                new: true,
+                runValidators: true,
+                upsert: true,
+                returnOriginal: false,
+                returnNewDocument: true
+            }).exec()
+            .then(()=>{
+              Student.findOneAndUpdate({
+                student_id: req.params.student_id
+            }, {
+                $set: update
+            }, {
+                new: true,
+                runValidators: true,
+                upsert: true,
+                returnOriginal: false,
+                returnNewDocument: true
+            }).exec()
+    
+            .then(()=>{
+              Student.find({school_id:decode.school_id, status:'registered'})
+                .then(responses=>{
+                  res.json({msg:student.name+' update was successfull',responses})
+                  console.log(responses)
+                })
             })
-        })
+            })
+            }
+            else{
+              var progressData = new Progress({
+                fullName:req.body.surname+' '+req.body.name,
+                clas:req.body.clas,
+                image:req.body.image,
+                schoolName:decode.schoolName,
+                attendance:[],
+                student_id:req.params.student_id,
+                school_id:decode.school_id,
+                officeHeld:'No Office Held'
+                  })
+                  progressData.save()
+                  .then(()=>{
+                    Student.findOneAndUpdate({
+                      student_id: req.params.student_id
+                  }, {
+                      $set: update
+                  }, {
+                      new: true,
+                      runValidators: true,
+                      upsert: true,
+                      returnOriginal: false,
+                      returnNewDocument: true
+                  }).exec()
+          
+                  .then(()=>{
+                    Student.find({school_id:decode.school_id, status:'registered'})
+                      .then(responses=>{
+                        res.json({msg:student.name+' update was successfull',responses})
+                        console.log(responses)
+                      })
+                  })
+                  })
+          
+            }
+          })
+
 
       })
     .catch(err => res.status(400).json('Error: ' + err))

@@ -26,4 +26,4 @@ officeHeld:{
 }
 })
 var Progress = mongoose.model('Progress', ProgressSchema)
-module.export = Progress
+module.exports = Progress
